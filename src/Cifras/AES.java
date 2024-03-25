@@ -7,7 +7,6 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 public class AES {
-
     public static String criptografar(String chaveAES, String texto) throws Exception {
         Key chave = new SecretKeySpec(chaveAES.getBytes(), "AES");
         Cipher cifra = Cipher.getInstance("AES");

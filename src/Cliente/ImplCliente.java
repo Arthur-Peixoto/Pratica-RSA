@@ -10,7 +10,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Map.Entry;
 
+import Cifras.RSA;
 import Cifras.AES;
+
 import Cifras.Hmac;
 import Cifras.Vernamm;
 
@@ -40,7 +42,6 @@ public class ImplCliente implements Runnable {
 
         Conta conta = null;
         
-
         contador++;
 
         while (true) {
