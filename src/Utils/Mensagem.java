@@ -4,20 +4,20 @@ import java.io.Serializable;
 public class Mensagem<T> implements Serializable{
     
     private T mensagem;
-    private String Hmac, criptografada;
+    private String Assinatura, criptografada;
     
     private int id, operacao;
     
-    public Mensagem(T mensagem, String hmac,String cripto, int operacao) {
+    public Mensagem(T mensagem, String assinatura,String cripto, int operacao) {
         this.mensagem = mensagem;
-        Hmac = hmac;
+        Assinatura = assinatura;
         this.criptografada = cripto;
         //this.id = id;
         this.operacao = operacao;
     }
 
-    public Mensagem(String hmac, String cripto){
-        this.Hmac = hmac;
+    public Mensagem(String assinatura, String cripto){
+        this.Assinatura = assinatura;
         this.criptografada = cripto;
     }
 
@@ -35,11 +35,11 @@ public class Mensagem<T> implements Serializable{
     public void setMensagem(T mensagem) {
         this.mensagem = mensagem;
     }
-    public String getHmac() {
-        return Hmac;
+    public String getAssinatura() {
+        return Assinatura;
     }
-    public void setHmac(String hmac) {
-        Hmac = hmac;
+    public void setAssinatura(String assinatura) {
+        this.Assinatura = assinatura;
     }
     public int getId() {
         return id;

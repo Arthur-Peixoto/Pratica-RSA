@@ -3,6 +3,7 @@ package Server;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
@@ -10,6 +11,7 @@ import java.util.Map.Entry;
 
 import Cifras.AES;
 import Cifras.Hmac;
+import Cifras.RSA;
 import Cifras.Vernamm;
 import Utils.Banco;
 import Utils.Conta;
@@ -17,6 +19,7 @@ import Utils.Mensagem;
 
 public class ImplServer implements Runnable {
 
+    RSA rsa = new RSA();
     String hmacKey =  "chavehmac";
     String vernKey = "chavevernam";
     String aesKey = "gR6@L2#Np8!TzQ7x";
@@ -28,10 +31,13 @@ public class ImplServer implements Runnable {
     ObjectOutputStream saida;
     boolean condicao = true;
     Banco banquinho = Banco.getInstance();
+    BigInteger privateKey = rsa.getPrivatekeybBigInteger();
+    BigInteger module = rsa.getmodulebBigInteger();
 
     public ImplServer(Socket cliente) {
         this.cliente = cliente;
-        this.run();
+        rsa.init();
+        this.run(); 
     }
 
     @Override
@@ -49,13 +55,13 @@ public class ImplServer implements Runnable {
 
             while (condicao) {
                 Mensagem mensagem = (Mensagem) entrada.readObject();
-                String hmac = mensagem.getHmac();
-                if(!hmac.equals(hmacKey)){
+                String assinatura = mensagem.getAssinatura();
+                if(!assinado(assinatura)){
                     System.out.println("Invasor detectado!");
                 }
                 else{
                 String cripto = mensagem.getCriptografada();
-                cripto = decodifa(cripto);
+                cripto = decodifica(cripto);
                 Conta continha = (Conta) mensagem.getMensagem();
                 switch (mensagem.getOperacao()) {
                     case 1:
@@ -137,11 +143,11 @@ public class ImplServer implements Runnable {
         scanner.close();
     }
 
-   public String decodifa(String mensagem){
+   public String decodifica(String mensagem){
         try {
             mensagem = AES.descriptografar(aesKey,mensagem);
             mensagem = Vernamm.decifrar(mensagem, vernKey);
-            //mensagem = Hmac.hMac(hmacKey, mensagem);
+            mensagem = Hmac.hMac(hmacKey, mensagem);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -152,13 +158,22 @@ public class ImplServer implements Runnable {
 
     public String codifica(String recebeMensagem) {    
         try {
-            //recebeMensagem = Hmac.hMac(hmacKey, recebeMensagem);
+            recebeMensagem = Hmac.hMac(hmacKey, recebeMensagem);
             recebeMensagem = Vernamm.cifrar(recebeMensagem, vernKey);
             recebeMensagem = AES.criptografar(aesKey,recebeMensagem);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return recebeMensagem;
+    }
+
+    public boolean assinado(String mensagem){
+        byte[] descripto = rsa.decriptografar(mensagem, privateKey, module);
+        String descript = new String(descripto.toString());
+        if(descript.equals(hmacKey)){
+            return true;
+        }
+        else return false;
     }
 
 

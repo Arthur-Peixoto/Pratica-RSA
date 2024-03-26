@@ -16,29 +16,41 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 public class RSA {
-    private BigInteger publickey;
-    private BigInteger privatekey;
+    private BigInteger e;
+    private BigInteger d;
     BigInteger n;
 
     public RSA() {
         this.init();
-        this.printModule();
     }
 
     public String getPublickey() {
-        return new String("Public key: " + publickey.toString());
+        return new String(e.toString());
     }
 
-    public void printModule() {
-        System.out.println("modulo: " + n);
+    public String getPrivatekey() {
+        return new String(d.toString());
+    }
+
+    public BigInteger getPrivatekeybBigInteger() {
+        return d;
+    }
+
+    public BigInteger getmodulebBigInteger() {
+        return n;
+    }
+    
+
+    public String getModule() {
+        return new String(n.toString());
     }
 
     public void init() {
         try {
             // Passo 1: sortear dois números primos aleatórios p e q.
-            SecureRandom random = new SecureRandom();
-            BigInteger p = BigInteger.probablePrime(1024, random);
-            BigInteger q = BigInteger.probablePrime(1024, random);
+            SecureRandom sr = new SecureRandom();
+            BigInteger p = BigInteger.probablePrime(1024, sr);
+            BigInteger q = BigInteger.probablePrime(1024, sr);
             // Passo 2: calcular módulo n.
             n = p.multiply(q);
             // Passo 3: calcular a função totiente ( ou phi) de Euler
@@ -46,14 +58,12 @@ public class RSA {
             BigInteger phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
             // Passo 4: calcular o expoente e (para a chave pública)
             // mdc(e, phi(n)) = 1.
-            BigInteger e = BigInteger.probablePrime(512, random); // 512 = 1024/2
+            e = BigInteger.probablePrime(512, sr);
             // Passo 5: calcular o expoente d (para a chave privada).
             // d*e mod phi(n) = 1.
-            BigInteger d = e.modInverse(phi);
+            d = e.modInverse(phi);
             // Passo 6: as chaves pública e privada são formadas pelo módulo n e seus
             // expoentes e e d.
-            privatekey = e;
-            publickey = d;
         } catch (Exception ignored) {
             // TODO: handle exception
         }
@@ -62,36 +72,32 @@ public class RSA {
     public String encrypt(String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
             IllegalBlockSizeException, BadPaddingException {
         BigInteger messageToBig = new BigInteger(message.getBytes());
-        messageToBig = messageToBig.modPow(publickey, n);
+        messageToBig = messageToBig.modPow(e, n);
         return messageToBig.toString();
-    }
-
-    public String encriptografar(String data, String chave, String modulo) {
-        BigInteger message = new BigInteger(data.getBytes());
-        BigInteger chavePublica = new BigInteger(chave);
-        BigInteger moduloCripto = new BigInteger(modulo);
-        message = message.modPow(chavePublica, moduloCripto);
-        return message.toString();
     }
 
     public String decrypt(String encryptedMessage) throws NoSuchAlgorithmException, NoSuchPaddingException,
             InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
         BigInteger messageToBig = new BigInteger(encryptedMessage);
-        byte[] messageToArray = messageToBig.modPow(privatekey, n).toByteArray();
+        byte[] messageToArray = messageToBig.modPow(d, n).toByteArray(); 
         return new String(messageToArray);
     }
 
-    public byte[] decriptografar(String data, String chave, String modulo) {
+    public String encriptografar(String data, BigInteger eExpoente, BigInteger modulo) {
         BigInteger message = new BigInteger(data.getBytes());
-        BigInteger chavePrivada = new BigInteger(chave);
-        BigInteger moduloCripto = new BigInteger(modulo);
-        byte[] messageToByte = message.modPow(chavePrivada, moduloCripto).toByteArray();
+        message = message.modPow(eExpoente, modulo); //C = M^e mod n
+        return message.toString();
+    }
+
+    public byte[] decriptografar(String data, BigInteger dExpoente, BigInteger modulo) {
+        BigInteger message = new BigInteger(data.getBytes());
+        byte[] messageToByte = message.modPow(dExpoente, modulo).toByteArray();//M = C^d mod n.
         return messageToByte;
     }
 
     public void printKeys() {
-        System.out.println("Public Key\n" + publickey);
-        System.out.println("Private Key\n" + privatekey);
+        System.out.println("Public Key\n{" + e+"}\n{"+n+"}");
+        System.out.println("Private Key\n" + d+"}\n{"+n+"}");
     }
 
     public static void main(String[] args) {
