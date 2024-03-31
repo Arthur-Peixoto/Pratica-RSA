@@ -1,19 +1,30 @@
 package Utils;
 import java.io.Serializable;
 
+import Cifras.gerarChaves;
+
 public class Mensagem<T> implements Serializable{
     
     private T mensagem;
     private String Assinatura, criptografada;
-    
+    private gerarChaves chaves;
+    public gerarChaves getChaves() {
+        return chaves;
+    }
+
+    public void setChaves(gerarChaves chaves) {
+        this.chaves = chaves;
+    }
+
     private int id, operacao;
     
-    public Mensagem(T mensagem, String assinatura,String cripto, int operacao) {
+    public Mensagem(T mensagem, String assinatura,String cripto, int operacao, gerarChaves chaves) {
         this.mensagem = mensagem;
         Assinatura = assinatura;
         this.criptografada = cripto;
         //this.id = id;
         this.operacao = operacao;
+        this.chaves = chaves;
     }
 
     public Mensagem(String assinatura, String cripto){

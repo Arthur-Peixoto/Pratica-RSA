@@ -1,5 +1,6 @@
 package Cifras;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -15,31 +16,26 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-public class RSA {
-    private BigInteger e;
-    private BigInteger d;
+public class RSA implements Serializable{
+    BigInteger e;
+    BigInteger d;
     BigInteger n;
 
     public RSA() {
         this.init();
     }
 
-    public String getPublickey() {
-        return new String(e.toString());
-    }
-
-    public String getPrivatekey() {
-        return new String(d.toString());
-    }
-
     public BigInteger getPrivatekeybBigInteger() {
         return d;
+    }
+
+    public BigInteger getPublickeybBigInteger() {
+        return e;
     }
 
     public BigInteger getmodulebBigInteger() {
         return n;
     }
-    
 
     public String getModule() {
         return new String(n.toString());
@@ -69,30 +65,18 @@ public class RSA {
         }
     }
 
-    public String encrypt(String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
-            IllegalBlockSizeException, BadPaddingException {
-        BigInteger messageToBig = new BigInteger(message.getBytes());
-        messageToBig = messageToBig.modPow(e, n);
-        return messageToBig.toString();
-    }
-
-    public String decrypt(String encryptedMessage) throws NoSuchAlgorithmException, NoSuchPaddingException,
-            InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
-        BigInteger messageToBig = new BigInteger(encryptedMessage);
-        byte[] messageToArray = messageToBig.modPow(d, n).toByteArray(); 
-        return new String(messageToArray);
-    }
-
+    
     public String encriptografar(String data, BigInteger eExpoente, BigInteger modulo) {
         BigInteger message = new BigInteger(data.getBytes());
         message = message.modPow(eExpoente, modulo); //C = M^e mod n
         return message.toString();
     }
 
-    public byte[] decriptografar(String data, BigInteger dExpoente, BigInteger modulo) {
+    public String decriptografar(String data, BigInteger dExpoente, BigInteger modulo) throws NoSuchAlgorithmException, NoSuchPaddingException,
+    InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
         BigInteger message = new BigInteger(data.getBytes());
         byte[] messageToByte = message.modPow(dExpoente, modulo).toByteArray();//M = C^d mod n.
-        return messageToByte;
+        return new String(messageToByte);
     }
 
     public void printKeys() {
@@ -100,19 +84,47 @@ public class RSA {
         System.out.println("Private Key\n" + d+"}\n{"+n+"}");
     }
 
+    public String getPublickey() {
+        return new String(e.toString());
+    }
+
+    public String getPrivatekey() {
+        return new String(d.toString());
+    }
+
+    public String encrypt(String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+            IllegalBlockSizeException, BadPaddingException {
+        BigInteger messageToBig = new BigInteger(message.getBytes());
+        messageToBig = messageToBig.modPow(e, n);
+        return messageToBig.toString();
+    }
+
+    public String decrypt(String encryptedMessage,BigInteger dExpoente, BigInteger modulo) throws NoSuchAlgorithmException, NoSuchPaddingException,
+            InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
+        BigInteger messageToBig = new BigInteger(encryptedMessage);
+        byte[] messageToArray = messageToBig.modPow(d, n).toByteArray(); 
+        return new String(messageToArray);
+    }
+
+
     public static void main(String[] args) {
         RSA rsazinho = new RSA();
         rsazinho.init();
         rsazinho.printKeys();
-        String msg = "vasco";
-
+        String msg = "HmacKey";
+        BigInteger publiczinho = rsazinho.getPublickeybBigInteger();
+        BigInteger modulozinho = rsazinho.getmodulebBigInteger();
+        BigInteger privadazinha = rsazinho.getPrivatekeybBigInteger();
         try {
-            String cifrada = rsazinho.encrypt(msg);
+            // String cifrada = rsazinho.encrypt(msg);
+            
+            String cifrada = rsazinho.encriptografar(msg, publiczinho, modulozinho);
             System.out.println("Mensagem cifrada: " + cifrada);
             byte[] bytesMensagemCifrada = cifrada.getBytes();
             System.out.println("Bytes da mensagem cifrada: " +
                     Arrays.toString(bytesMensagemCifrada));
-            String decifrada = rsazinho.decrypt(cifrada);
+            String decifrada = rsazinho.decrypt(cifrada, privadazinha, modulozinho);
+            //String decifrada = rsazinho.decriptografar(cifrada, privadazinha, modulozinho);
             System.out.println("Mensagem decifrada: " + decifrada);
         } catch (Exception e) {
             // TODO: handle exception

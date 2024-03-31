@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Map.Entry;
 
 import Cifras.RSA;
@@ -16,6 +17,7 @@ import Cifras.AES;
 
 import Cifras.Hmac;
 import Cifras.Vernamm;
+import Cifras.gerarChaves;
 
 import java.util.Scanner;
 
@@ -28,20 +30,23 @@ public class ImplCliente implements Runnable {
     String VernKey, HmacKey, AesKey;
     ObjectInputStream entrada;
     ObjectOutputStream saida;
-    RSA rsa = new RSA();
+    gerarChaves chaves = new gerarChaves();
+    RSA rsa = chaves.getRsa();
+
     AES aes = new AES();
     String retorno;
     BigInteger modulo;
     BigInteger privateKey;
+    BigInteger publicKey;
 
     public ImplCliente(Socket cliente, String vernKey, String hmacKey, String aesKey) {
         this.cliente = cliente;
         VernKey = vernKey;
-        HmacKey = hmacKey;
+        HmacKey = chaves.getHmacKey();
         AesKey = aesKey;
-        rsa.init();
-        privateKey = rsa.getPrivatekeybBigInteger();
-        modulo = rsa.getmodulebBigInteger();
+        publicKey = chaves.getPublickeybBigInteger();
+        privateKey = chaves.getPrivatekeybBigInteger();
+        modulo = chaves.getmodulebBigInteger();
     }
 
     @Override
@@ -118,7 +123,7 @@ public class ImplCliente implements Runnable {
                                         }
                                         String retornoCripto = codifica(retorno);
                                         assinatura = assinar(HmacKey);
-                                        Mensagem mensagemzinha = new Mensagem<Conta>(conta, assinatura, retornoCripto, 1);
+                                        Mensagem mensagemzinha = new Mensagem<Conta>(conta, assinatura, retornoCripto, 1, chaves);
 
                                         saida.writeObject(mensagemzinha);
                                         saida.flush();
@@ -128,7 +133,7 @@ public class ImplCliente implements Runnable {
                                         System.out.println(retornoSaldo);
                                         retornoSaldo = codifica(retornoSaldo);
                                         assinatura = assinar(HmacKey);
-                                        Mensagem mensagemzinha1 = new Mensagem<Conta>(conta, assinatura, retornoSaldo, 2);
+                                        Mensagem mensagemzinha1 = new Mensagem<Conta>(conta, assinatura, retornoSaldo, 2,chaves );
 
                                         saida.writeObject(mensagemzinha1);
                                         saida.flush();
@@ -166,7 +171,7 @@ public class ImplCliente implements Runnable {
                                         String retornoInvestimentos = "Investimentos realizados!";
                                         retornoInvestimentos = codifica(retornoInvestimentos);
                                         assinatura = assinar(HmacKey);
-                                        Mensagem mensagemzinha2 = new Mensagem<Conta>(conta, assinatura,retornoInvestimentos, 3);
+                                        Mensagem mensagemzinha2 = new Mensagem<Conta>(conta, assinatura,retornoInvestimentos, 3,chaves);
                                         saida.writeObject(mensagemzinha2);
                                         saida.flush();
                                         break;
@@ -185,7 +190,7 @@ public class ImplCliente implements Runnable {
                                         retornoSaque = "Saque realizado com sucesso!";
                                         retornoSaque = codifica(retornoSaque);
                                         assinatura = assinar(HmacKey);
-                                        Mensagem mensagemzinha3 = new Mensagem<Conta>(conta, assinatura, retornoSaque, 4);
+                                        Mensagem mensagemzinha3 = new Mensagem<Conta>(conta, assinatura, retornoSaque, 4,chaves);
 
                                         saida.writeObject(mensagemzinha3);
                                         saida.flush();
@@ -198,7 +203,7 @@ public class ImplCliente implements Runnable {
                                         String retornoDeposito = "Depósito realizado com sucesso!";
                                         retornoDeposito = codifica(retornoDeposito);
                                         assinatura = assinar(HmacKey);
-                                        Mensagem mensagemzinha4 = new Mensagem<Conta>(conta, assinatura, retornoDeposito,5);
+                                        Mensagem mensagemzinha4 = new Mensagem<Conta>(conta, assinatura, retornoDeposito,5,chaves);
 
                                         saida.writeObject(mensagemzinha4);
                                         saida.flush();
@@ -237,7 +242,7 @@ public class ImplCliente implements Runnable {
                             String concatenate2 = nome + "-" + cpf + "-" + senha + "-" + endereco + "-" + telefone;
                             concatenate2 = codifica(concatenate2);
                             assinar(concatenate2);
-                            Mensagem mensagemzinha = new Mensagem<Conta>(conta, HmacKey, concatenate2, 6);
+                            Mensagem mensagemzinha = new Mensagem<Conta>(conta, HmacKey, concatenate2, 6,chaves);
 
                             saida.writeObject(mensagemzinha);
                             saida.flush();
@@ -261,7 +266,7 @@ public class ImplCliente implements Runnable {
         try {
             mensagem = AES.descriptografar(AesKey, mensagem);
             mensagem = Vernamm.decifrar(mensagem, VernKey);
-            mensagem = Hmac.hMac(HmacKey, mensagem);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -271,7 +276,6 @@ public class ImplCliente implements Runnable {
 
     public String codifica(String recebeMensagem) {
         try {
-            recebeMensagem = Hmac.hMac(HmacKey, recebeMensagem);
             recebeMensagem = Vernamm.cifrar(recebeMensagem, VernKey);
             recebeMensagem = aes.criptografar(AesKey, recebeMensagem);
         } catch (Exception e) {
@@ -282,8 +286,10 @@ public class ImplCliente implements Runnable {
 
     public String assinar(String mensagem){
         System.out.println("Mensagem assinada");
-        return rsa.encriptografar(mensagem, privateKey, modulo);
+        return rsa.encriptografar(mensagem, publicKey, modulo);
     }
+
+  
 
     public void ouvirThread() throws ClassNotFoundException {
         try {

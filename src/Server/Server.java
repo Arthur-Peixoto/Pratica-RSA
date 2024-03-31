@@ -29,6 +29,7 @@ public class Server implements Runnable{
                 t1.start();
             }
         } catch (Exception e) {
+            System.out.println(e);
             // TODO: handle exception
         } 
     }

@@ -1,5 +1,6 @@
 package Cifras;
 
+import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -8,7 +9,7 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-public class Hmac {
+public class Hmac implements Serializable {
     
     public static final String ALG = "HmacSHA256";
 
@@ -22,17 +23,7 @@ public class Hmac {
 
         byte[] bytesHMAC = shaHMAC.doFinal(message.getBytes("UTF-8"));
 
-        return byte2Hex(bytesHMAC);
-
-    }
-
-    private static String byte2Hex(byte[] bytes) {
-
-        StringBuilder sb = new StringBuilder();
-        for(byte b : bytes) {
-            sb.append(String.format("%02x",b));
-        }
-        return sb.toString();
+        return Base64.getEncoder().encodeToString(bytesHMAC);
 
     }
 
